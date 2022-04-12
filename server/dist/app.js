@@ -49,7 +49,6 @@ var morgan_1 = __importDefault(require("morgan"));
 var RoomEvent_1 = require("./RoomEvent");
 var uuid_1 = require("uuid");
 var http_1 = require("http");
-var rooms_1 = require("./rooms/rooms");
 var roomsRoute_1 = __importDefault(require("./routes/roomsRoute"));
 var app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -65,7 +64,6 @@ var io = new socket_io_1.Server(server, {
 });
 // run once the client connects
 io.on(RoomEvent_1.RoomEvent.connection, function (socket) {
-    var rooms = (0, rooms_1.getRooms)();
     socket.on(RoomEvent_1.RoomEvent.CREATE_ROOM, function (_a) {
         var newRoom = _a.newRoom;
         socket.join(newRoom.roomId);
@@ -108,7 +106,12 @@ app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: false }));
 app.use((0, cookie_parser_1.default)());
-app.use(express_1.default.static(path_1.default.join(__dirname, "public")));
+if (process.env.NODE_ENV === "production") {
+    app.use(express_1.default.static(path_1.default.join(__dirname, "/client/build")));
+    app.get("*", function (req, res) {
+        res.sendFile(path_1.default.resolve(__dirname, "client", "build", "index.html"));
+    });
+}
 app.use("/watch-app/rooms", roomsRoute_1.default);
 app.get("/watch-app/user", (function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
     var userId;
