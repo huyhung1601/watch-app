@@ -8,7 +8,7 @@ import logger from "morgan";
 import { RoomEvent } from "./RoomEvent";
 import { v4 as uuidv4 } from "uuid";
 import { createServer } from "http";
-import { getRooms, IRoomActs, leaveRoom } from "./rooms/rooms";
+import { IRoomActs } from "./rooms/rooms";
 
 import roomRoute from "./routes/roomsRoute";
 
@@ -32,9 +32,7 @@ const io = new Server(server, {
 
 // run once the client connects
 io.on(RoomEvent.connection, (socket: Socket) => {
-  const rooms = getRooms();
-
-  socket.on(RoomEvent.CREATE_ROOM, ({ newRoom }) => {
+  socket.on(RoomEvent.CREATE_ROOM, ({ newRoom }: any) => {
     socket.join(newRoom.roomId);
     //welcome client to room
     const msg = { sender: "server", text: `Welcome to Watch-app room` };
@@ -57,12 +55,12 @@ io.on(RoomEvent.connection, (socket: Socket) => {
     socket.broadcast.to(roomId).emit(RoomEvent.LEFT_ROOM, { userId });
   });
 
-  socket.on(RoomEvent.CLIENT_SEND_MSG, ({ roomId, msg }) => {
+  socket.on(RoomEvent.CLIENT_SEND_MSG, ({ roomId, msg }: any) => {
     //send Msg to other in the room
     socket.broadcast.to(roomId).emit(RoomEvent.CLIENT_GET_MSG, { msg });
   });
 
-  socket.on(RoomEvent.VIDEO_UPDATING, ({ videoUpdate, roomId }) => {
+  socket.on(RoomEvent.VIDEO_UPDATING, ({ videoUpdate, roomId }: any) => {
     //broadcast video to roomId except sender
     socket.broadcast
       .to(roomId)
@@ -76,6 +74,13 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "client/build")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  });
+}
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/watch-app/rooms", roomRoute);

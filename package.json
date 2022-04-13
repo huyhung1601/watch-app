@@ -1,0 +1,10 @@
+{"scripts":{
+    "start": "node ./server/bin/www",
+    "install-client": "cd client && npm install",
+    "install-server": "cd server && npm install",
+    "build-client": "cd client && npm run build",
+    "build-server": "cd server && tsc",
+    "heroku-postbuild": "npm run install-client && npm run install-server && npm run build-client && npm run build-server"
+},
+"engines": {"node": "16.x"}
+}
